@@ -1,0 +1,86 @@
+{% extends 'flowers/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <img src="{{ bouquet.image.url }}" class="card-img-top" alt="{{ bouquet.title }}">
+            <div class="card-body">
+                <h2 class="card-title">{{ bouquet.title }}</h2>
+                <p class="card-text">{{ bouquet.description }}</p>
+                
+                <div class="share-link">
+                    <p class="mb-1"><strong>Share this bouquet:</strong></p>
+                    <input type="text" class="form-control" readonly value="{{ request.scheme }}://{{ request.get_host }}{% url 'bouquet_detail' share_id=bouquet.share_id %}">
+                </div>
+
+                <div class="d-flex align-items-center mb-3">
+                    <button class="btn btn-outline-primary vote-btn me-2 {% if user_has_voted %}voted{% endif %}" data-bouquet-id="{{ bouquet.share_id }}">
+                        <i class="fas fa-heart"></i> 
+                        <span class="vote-count">{{ vote_count }}</span>
+                    </button>
+                    <span class="text-muted">votes</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title">Comments</h3>
+                {% if user.is_authenticated %}
+                    <form method="post" action="{% url 'add_comment' share_id=bouquet.share_id %}" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea name="text" class="form-control" rows="3" required placeholder="Add a comment..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
+                    </form>
+                {% else %}
+                    <p class="text-muted">Please log in to leave a comment.</p>
+                {% endif %}
+
+                <div class="comments-section">
+                    {% for comment in comments %}
+                        <div class="comment border-bottom py-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ comment.author.username }}</strong>
+                                <small class="text-muted">{{ comment.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-0">{{ comment.text }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No comments yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.vote-btn').click(function() {
+        var btn = $(this);
+        var bouquetId = btn.data('bouquet-id');
+        
+        $.ajax({
+            url: '{% url "toggle_vote" share_id=bouquet.share_id %}',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                btn.find('.vote-count').text(data.vote_count);
+                if (data.user_has_voted) {
+                    btn.addClass('voted');
+                } else {
+                    btn.removeClass('voted');
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

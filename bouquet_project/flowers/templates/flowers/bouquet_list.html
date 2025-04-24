@@ -1,0 +1,50 @@
+{% extends 'flowers/base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% if user.is_authenticated %}
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Wedding Bouquets</h1>
+                {% if user.is_staff %}
+                    <a href="{% url 'admin:flowers_bouquet_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Bouquet
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">Welcome to Wedding Bouquet Generator!</h4>
+                <p>Please <a href="{% url 'login' %}">login</a> or <a href="{% url 'register' %}">register</a> to interact with bouquets.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    {% for bouquet in bouquets %}
+    <div class="col-md-4 mb-4">
+        <div class="card bouquet-card h-100">
+            <img src="{{ bouquet.image.url }}" class="card-img-top" alt="{{ bouquet.title }}">
+            <div class="card-body">
+                <h5 class="card-title">{{ bouquet.title }}</h5>
+                <p class="card-text">{{ bouquet.description|truncatewords:20 }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'bouquet_detail' share_id=bouquet.share_id %}" class="btn btn-primary">View Details</a>
+                    <span class="text-muted">
+                        <i class="fas fa-heart"></i> {{ bouquet.votes.count }}
+                        {% if user.is_authenticated %}
+                        <br><small>Created by: {{ bouquet.created_by.username }}</small>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center">
+        <p>No bouquets available yet.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
